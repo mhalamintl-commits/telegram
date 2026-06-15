@@ -1,0 +1,6 @@
+{
+  "name": "TeleFlow",
+  "description": "Multi-channel to target Channel Telegram Post Forwarding non-stop realtime 24/7 with User & Admin dashboards, subscription plans, and secure payment gateway integrations.",
+  "requestFramePermissions": [],
+  "majorCapabilities": ["MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"]
+}
