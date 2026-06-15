@@ -1,6 +1,0 @@
-{
-  "name": "Telegram Forwarding Control Hub",
-  "description": "An interactive admin and user management dashboard, rule filter simulator, and complete codebase generator for a self-hosted Pyrogram-based Telegram post forwarding automation system.",
-  "requestFramePermissions": [],
-  "majorCapabilities": ["MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"]
-}
