@@ -40,39 +40,10 @@ const DEFAULT_DATA = {
       createdAt: new Date().toISOString()
     } as any
   ],
-  forwarders: [
-    {
-      id: 'fwd-1',
-      name: 'Crypto Signal Filter',
-      sources: ['@bitcoin_signals', '@eth_news_alerts'],
-      targets: ['@my_crypto_channel'],
-      includeWords: ['Alert', 'Buy', 'Breakout'],
-      excludeWords: ['scam', 'spam', 'refLink'],
-      replaceRules: [
-        { id: 'rule-1', find: 'bitcoin', replace: 'BTC' },
-        { id: 'rule-2', find: 'ethereum', replace: 'ETH' }
-      ],
-      mediaOnly: false,
-      textOnly: false,
-      isActive: true,
-      totalForwarded: 0,
-      lastForwardedAt: new Date().toISOString()
-    }
-  ] as Forwarder[],
+  forwarders: [] as Forwarder[],
   logs: [] as ForwardingLog[],
   invoices: [] as BillingInvoice[],
-  tickets: [
-    {
-      id: 'TF-A1B2C',
-      userId: 'user-1',
-      subject: 'How do I add multiple sources?',
-      message: 'I want to forward from 3 different channels, is that possible on free plan?',
-      status: 'closed',
-      createdAt: new Date(Date.now() - 24 * 60 * 60 * 1000).toISOString(),
-      adminReply: 'Yes, you can separate multiple source usernames with commas.',
-      repliedAt: new Date(Date.now() - 23 * 60 * 60 * 1000).toISOString()
-    }
-  ] as any[],
+  tickets: [] as any[],
   settings: {
     dorjiMerchantId: 'MERCHANT_DEMO_998',
     dorjiApiKey: 'apiKey_demo_e7987cbac17',

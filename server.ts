@@ -166,7 +166,12 @@ app.post('/api/forwarders', (req, res) => {
     lastForwardedAt: undefined,
     headerTemplate: req.body.headerTemplate || '',
     footerTemplate: req.body.footerTemplate || '',
-    webhookUrl: req.body.webhookUrl || ''
+    webhookUrl: req.body.webhookUrl || '',
+    enablePhotos: req.body.enablePhotos !== false,
+    enableVideos: req.body.enableVideos !== false,
+    enableStickers: req.body.enableStickers !== false,
+    enableDocuments: req.body.enableDocuments !== false,
+    enableAnimatedText: req.body.enableAnimatedText !== false
   };
 
   db.forwarders.push(newForwarder);
@@ -717,8 +722,108 @@ app.post('/api/forwarders/:id/simulate', (req, res) => {
     });
   }
 
-  // 2. Media filters
-  if (fwd.mediaOnly && !isMedia) {
+  // 2. Media type specific filters
+  const enablePhotos = fwd.enablePhotos !== false;
+  const enableVideos = fwd.enableVideos !== false;
+  const enableStickers = fwd.enableStickers !== false;
+  const enableDocuments = fwd.enableDocuments !== false;
+  const enableAnimatedText = fwd.enableAnimatedText !== false;
+
+  const simType = req.body.simType || (isMedia ? 'photo' : 'text');
+
+  if (simType === 'photo' && !enablePhotos) {
+    return res.json({
+      success: false,
+      log: {
+        id: 'sim-' + Date.now(),
+        forwarderId: fwd.id,
+        forwarderName: fwd.name,
+        sourceChat,
+        targetChat: fwd.targets[0] || '@unspecified_target',
+        originalText: messageText,
+        processedText: '',
+        status: 'filtered',
+        reason: 'Filtered: Photos are disabled in this pipeline settings.',
+        timestamp: new Date().toISOString()
+      }
+    });
+  }
+
+  if (simType === 'video' && !enableVideos) {
+    return res.json({
+      success: false,
+      log: {
+        id: 'sim-' + Date.now(),
+        forwarderId: fwd.id,
+        forwarderName: fwd.name,
+        sourceChat,
+        targetChat: fwd.targets[0] || '@unspecified_target',
+        originalText: messageText,
+        processedText: '',
+        status: 'filtered',
+        reason: 'Filtered: Videos are disabled in this pipeline settings.',
+        timestamp: new Date().toISOString()
+      }
+    });
+  }
+
+  if (simType === 'sticker' && !enableStickers) {
+    return res.json({
+      success: false,
+      log: {
+        id: 'sim-' + Date.now(),
+        forwarderId: fwd.id,
+        forwarderName: fwd.name,
+        sourceChat,
+        targetChat: fwd.targets[0] || '@unspecified_target',
+        originalText: messageText,
+        processedText: '',
+        status: 'filtered',
+        reason: 'Filtered: Stickers/GIFs are disabled in this pipeline settings.',
+        timestamp: new Date().toISOString()
+      }
+    });
+  }
+
+  if (simType === 'document' && !enableDocuments) {
+    return res.json({
+      success: false,
+      log: {
+        id: 'sim-' + Date.now(),
+        forwarderId: fwd.id,
+        forwarderName: fwd.name,
+        sourceChat,
+        targetChat: fwd.targets[0] || '@unspecified_target',
+        originalText: messageText,
+        processedText: '',
+        status: 'filtered',
+        reason: 'Filtered: Documents are disabled in this pipeline settings.',
+        timestamp: new Date().toISOString()
+      }
+    });
+  }
+
+  if (simType === 'animated_text' && !enableAnimatedText) {
+    return res.json({
+      success: false,
+      log: {
+        id: 'sim-' + Date.now(),
+        forwarderId: fwd.id,
+        forwarderName: fwd.name,
+        sourceChat,
+        targetChat: fwd.targets[0] || '@unspecified_target',
+        originalText: messageText,
+        processedText: '',
+        status: 'filtered',
+        reason: 'Filtered: Animated text and emojis are disabled in this pipeline.',
+        timestamp: new Date().toISOString()
+      }
+    });
+  }
+
+  // Fallback to legacy binary switches
+  const isMediaSim = isMedia || ['photo', 'video', 'sticker', 'document'].includes(simType);
+  if (fwd.mediaOnly && !isMediaSim) {
     return res.json({
       success: false,
       log: {
@@ -736,7 +841,7 @@ app.post('/api/forwarders/:id/simulate', (req, res) => {
     });
   }
 
-  if (fwd.textOnly && isMedia) {
+  if (fwd.textOnly && isMediaSim) {
     return res.json({
       success: false,
       log: {
@@ -811,7 +916,8 @@ app.post('/api/forwarders/:id/simulate', (req, res) => {
 
   // Apply enterprise custom header and footer templates if configured
   if (fwd.headerTemplate) {
-    const parsedHeader = fwd.headerTemplate.replace(/\\n/g, '\n');
+    let parsedHeader = fwd.headerTemplate.replace(/\\n/g, '\n');
+    parsedHeader = parsedHeader.replace(/{source}/gi, sourceChat);
     processedText = parsedHeader + processedText;
   }
   if (fwd.footerTemplate) {
@@ -1682,6 +1788,35 @@ async function runBotRealtimeCollectionPoller(): Promise<void> {
             
             // Apply pipeline rules!
             const isMediaMsg = !!(msg.photo || msg.video || msg.document || msg.audio || msg.animation);
+            
+            // Selective media type check helpers
+            const isPhoto = !!msg.photo;
+            const isVideo = !!msg.video;
+            const isSticker = !!(msg.sticker || msg.animation);
+            const isDoc = !!(msg.document && !msg.video && !msg.photo && !msg.animation);
+            const isAnimatedText = msg.entities && msg.entities.some((e: any) => ['bold', 'italic', 'underline', 'strikethrough', 'custom_emoji'].includes(e.type));
+            
+            if (isPhoto && fwd.enablePhotos === false) {
+              logFiltered(u.id, fwd, chatUsername || chatIdString, text, 'Filtered: Photos are disabled in this pipeline settings.');
+              continue;
+            }
+            if (isVideo && fwd.enableVideos === false) {
+              logFiltered(u.id, fwd, chatUsername || chatIdString, text, 'Filtered: Videos are disabled in this pipeline settings.');
+              continue;
+            }
+            if (isSticker && fwd.enableStickers === false) {
+              logFiltered(u.id, fwd, chatUsername || chatIdString, text, 'Filtered: Stickers/GIFs are disabled in pipeline settings.');
+              continue;
+            }
+            if (isDoc && fwd.enableDocuments === false) {
+              logFiltered(u.id, fwd, chatUsername || chatIdString, text, 'Filtered: Documents and files are disabled.');
+              continue;
+            }
+            if (isAnimatedText && fwd.enableAnimatedText === false) {
+              logFiltered(u.id, fwd, chatUsername || chatIdString, text, 'Filtered: Rich formatting/animated text is disabled.');
+              continue;
+            }
+
             if (fwd.mediaOnly && !isMediaMsg) {
               logFiltered(u.id, fwd, chatUsername || chatIdString, text, 'Filtered: Media-only is active, but post matches only text.');
               continue;
@@ -1726,7 +1861,8 @@ async function runBotRealtimeCollectionPoller(): Promise<void> {
 
             // Apply enterprise custom header and footer templates if configured
             if (fwd.headerTemplate) {
-              const parsedHeader = fwd.headerTemplate.replace(/\\n/g, '\n');
+              let parsedHeader = fwd.headerTemplate.replace(/\\n/g, '\n');
+              parsedHeader = parsedHeader.replace(/{source}/gi, chatUsername || chatIdString || '');
               processedText = parsedHeader + processedText;
             }
             if (fwd.footerTemplate) {
@@ -1892,8 +2028,46 @@ async function runUserRealtimeCollectionPoller(): Promise<void> {
 
                 console.log(`[User Channel Poller] Matching new message ${msg.id} in source ${cleanSource}: "${text.substring(0, 60)}..."`);
 
-                // Filter 1: Media flags checks
+                // Filter 1: Media flags and selective types checks
                 const isMediaMsg = !!msg.media;
+                 
+                // Selective type check helpers
+                const mediaClass = msg.media ? (msg.media as any).className : '';
+                const isPhoto = mediaClass === 'MessageMediaPhoto';
+                let isVideo = false;
+                let isSticker = false;
+                let isDoc = false;
+                 
+                if (mediaClass === 'MessageMediaDocument' && (msg.media as any).document) {
+                  const mime = (msg.media as any).document.mimeType || '';
+                  if (mime.startsWith('video/')) isVideo = true;
+                  else if (mime.startsWith('image/gif') || mime.includes('sticker') || mime.includes('tgsticker')) isSticker = true;
+                  else isDoc = true;
+                }
+                 
+                const isAnimatedText = msg.entities && msg.entities.length > 0;
+                 
+                if (isPhoto && fwd.enablePhotos === false) {
+                  logFiltered(u.id, fwd, cleanSource, text, 'Filtered: Photos are disabled in pipeline settings.');
+                  continue;
+                }
+                if (isVideo && fwd.enableVideos === false) {
+                  logFiltered(u.id, fwd, cleanSource, text, 'Filtered: Videos are disabled in pipeline settings.');
+                  continue;
+                }
+                if (isSticker && fwd.enableStickers === false) {
+                  logFiltered(u.id, fwd, cleanSource, text, 'Filtered: Stickers/GIFs are disabled in pipeline settings.');
+                  continue;
+                }
+                if (isDoc && fwd.enableDocuments === false) {
+                  logFiltered(u.id, fwd, cleanSource, text, 'Filtered: Documents and files are disabled.');
+                  continue;
+                }
+                if (isAnimatedText && fwd.enableAnimatedText === false) {
+                  logFiltered(u.id, fwd, cleanSource, text, 'Filtered: Rich formatting/animated text is disabled.');
+                  continue;
+                }
+
                 if (fwd.mediaOnly && !isMediaMsg) {
                   logFiltered(u.id, fwd, cleanSource, text, 'Filtered: Media-only is active, but post matches only text.');
                   continue;
@@ -1938,7 +2112,7 @@ async function runUserRealtimeCollectionPoller(): Promise<void> {
 
                 // Filter 5: Custom Templates
                 if (fwd.headerTemplate) {
-                  const parsedHeader = fwd.headerTemplate.replace(/\\n/g, '\n');
+                  let parsedHeader = fwd.headerTemplate.replace(/\\n/g, '\n').replace(/{source}/gi, cleanSource);
                   processedText = parsedHeader + processedText;
                 }
                 if (fwd.footerTemplate) {

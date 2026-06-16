@@ -40,6 +40,11 @@ export interface Forwarder {
   headerTemplate?: string;
   footerTemplate?: string;
   webhookUrl?: string;
+  enablePhotos?: boolean;
+  enableVideos?: boolean;
+  enableStickers?: boolean;
+  enableDocuments?: boolean;
+  enableAnimatedText?: boolean;
 }
 
 export interface ForwardingLog {

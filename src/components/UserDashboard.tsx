@@ -12,6 +12,7 @@ import RecentActivityFeed from './RecentActivityFeed';
 import ConnectTelegramAccount from './ConnectTelegramAccount';
 import VisualArchitectureCanvas from './VisualArchitectureCanvas';
 import ForwardingVolumeChart from './ForwardingVolumeChart';
+import SystemHealthWidget from './SystemHealthWidget';
 import { motion } from 'motion/react';
 
 interface UserDashboardProps {
@@ -43,6 +44,13 @@ export default function UserDashboard({ user, onUpdateUser, onLogout }: UserDash
   const [fwdHeaderTemplate, setFwdHeaderTemplate] = useState('');
   const [fwdFooterTemplate, setFwdFooterTemplate] = useState('');
   const [fwdWebhookUrl, setFwdWebhookUrl] = useState('');
+  
+  // Custom content-type checkboxes
+  const [fwdEnablePhotos, setFwdEnablePhotos] = useState(true);
+  const [fwdEnableVideos, setFwdEnableVideos] = useState(true);
+  const [fwdEnableStickers, setFwdEnableStickers] = useState(true);
+  const [fwdEnableDocuments, setFwdEnableDocuments] = useState(true);
+  const [fwdEnableAnimatedText, setFwdEnableAnimatedText] = useState(true);
 
   // Simulation playground states
   const [selectedFwdId, setSelectedFwdId] = useState('');
@@ -170,6 +178,11 @@ export default function UserDashboard({ user, onUpdateUser, onLogout }: UserDash
     setFwdHeaderTemplate('');
     setFwdFooterTemplate('');
     setFwdWebhookUrl('');
+    setFwdEnablePhotos(true);
+    setFwdEnableVideos(true);
+    setFwdEnableStickers(true);
+    setFwdEnableDocuments(true);
+    setFwdEnableAnimatedText(true);
     setShowConfigModal(true);
   };
 
@@ -187,6 +200,11 @@ export default function UserDashboard({ user, onUpdateUser, onLogout }: UserDash
     setFwdHeaderTemplate(fwd.headerTemplate || '');
     setFwdFooterTemplate(fwd.footerTemplate || '');
     setFwdWebhookUrl(fwd.webhookUrl || '');
+    setFwdEnablePhotos(fwd.enablePhotos !== false);
+    setFwdEnableVideos(fwd.enableVideos !== false);
+    setFwdEnableStickers(fwd.enableStickers !== false);
+    setFwdEnableDocuments(fwd.enableDocuments !== false);
+    setFwdEnableAnimatedText(fwd.enableAnimatedText !== false);
     setShowConfigModal(true);
   };
 
@@ -212,6 +230,11 @@ export default function UserDashboard({ user, onUpdateUser, onLogout }: UserDash
       headerTemplate: fwdHeaderTemplate,
       footerTemplate: fwdFooterTemplate,
       webhookUrl: fwdWebhookUrl,
+      enablePhotos: fwdEnablePhotos,
+      enableVideos: fwdEnableVideos,
+      enableStickers: fwdEnableStickers,
+      enableDocuments: fwdEnableDocuments,
+      enableAnimatedText: fwdEnableAnimatedText,
       isActive: editingForwarder ? editingForwarder.isActive : true
     };
 
@@ -680,6 +703,11 @@ export default function UserDashboard({ user, onUpdateUser, onLogout }: UserDash
               <ForwardingVolumeChart logs={logs} />
             </div>
           )}
+
+          {/* SYSTEM HEALTH TRACKING DIAGNOSTICS */}
+          <div className="mb-6">
+            <SystemHealthWidget user={user} forwarders={forwarders} />
+          </div>
 
           {forwarders.length === 0 ? (
             <div className="rounded-xl border border-dashed border-[#1e2230] p-12 text-center text-gray-400">
@@ -1292,6 +1320,63 @@ export default function UserDashboard({ user, onUpdateUser, onLogout }: UserDash
                 </div>
               </div>
 
+              {/* SELECTIVE CONTENT-TYPE ROUTING FILTERS */}
+              <div className="p-3 bg-[#14161f]/40 rounded-lg border border-[#1e2230]/70 space-y-2">
+                <p className="text-xs font-semibold text-gray-200">Forwarded Post Content Elements Enable</p>
+                <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-5 gap-3 pt-1">
+                  <label className="flex items-center gap-1.5 cursor-pointer text-xs text-gray-300 hover:text-white select-none">
+                    <input
+                      type="checkbox"
+                      className="h-4 w-4 rounded bg-[#14161f] border-[#1e2230] text-indigo-600"
+                      checked={fwdEnablePhotos}
+                      onChange={(e) => setFwdEnablePhotos(e.target.checked)}
+                    />
+                    <span>Photos</span>
+                  </label>
+                  
+                  <label className="flex items-center gap-1.5 cursor-pointer text-xs text-gray-300 hover:text-white select-none">
+                    <input
+                      type="checkbox"
+                      className="h-4 w-4 rounded bg-[#14161f] border-[#1e2230] text-indigo-600"
+                      checked={fwdEnableVideos}
+                      onChange={(e) => setFwdEnableVideos(e.target.checked)}
+                    />
+                    <span>Videos</span>
+                  </label>
+
+                  <label className="flex items-center gap-1.5 cursor-pointer text-xs text-gray-300 hover:text-white select-none">
+                    <input
+                      type="checkbox"
+                      className="h-4 w-4 rounded bg-[#14161f] border-[#1e2230] text-indigo-600"
+                      checked={fwdEnableStickers}
+                      onChange={(e) => setFwdEnableStickers(e.target.checked)}
+                    />
+                    <span>Stickers & GIFs</span>
+                  </label>
+
+                  <label className="flex items-center gap-1.5 cursor-pointer text-xs text-gray-300 hover:text-white select-none">
+                    <input
+                      type="checkbox"
+                      className="h-4 w-4 rounded bg-[#14161f] border-[#1e2230] text-indigo-600"
+                      checked={fwdEnableDocuments}
+                      onChange={(e) => setFwdEnableDocuments(e.target.checked)}
+                    />
+                    <span>Documents</span>
+                  </label>
+
+                  <label className="flex items-center gap-1.5 cursor-pointer text-xs text-gray-300 hover:text-white select-none">
+                    <input
+                      type="checkbox"
+                      className="h-4 w-4 rounded bg-[#14161f] border-[#1e2230] text-indigo-600"
+                      checked={fwdEnableAnimatedText}
+                      onChange={(e) => setFwdEnableAnimatedText(e.target.checked)}
+                    />
+                    <span>Animated Text</span>
+                  </label>
+                </div>
+                <p className="text-[10px] text-gray-500">Uncheck post elements to exclude them from being routed to destination targets.</p>
+              </div>
+
               <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                 <div>
                   <label className="block text-xs font-semibold text-gray-300 mb-1">Source Chat Usernames / IDs <span className="text-red-400">*</span></label>
@@ -1411,18 +1496,42 @@ export default function UserDashboard({ user, onUpdateUser, onLogout }: UserDash
                 <div className="space-y-3 p-3.5 rounded-lg bg-[#07080a] border border-indigo-500/15">
                   <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
                     <div>
-                      <label className="block text-[11px] font-semibold text-gray-400 mb-1">
-                        White-Label Prepend Header Customization
+                      <label className="block text-[11px] font-semibold text-gray-400 mb-1 flex justify-between items-center">
+                        <span>White-Label Prepend Header Customization</span>
+                        <span className="text-[9px] text-indigo-400">supports {'{source}'}</span>
                       </label>
+                      <div className="flex flex-wrap gap-1 mb-1.5">
+                        <button
+                          type="button"
+                          onClick={() => setFwdHeaderTemplate('Forwarded From > {source}\\n\\n')}
+                          className="px-2 py-0.5 rounded bg-indigo-500/10 border border-indigo-500/20 text-[9px] text-indigo-300 font-semibold hover:bg-indigo-500/20 active:scale-95 transition-all cursor-pointer"
+                        >
+                          Preset: Forwarded From &gt; Source
+                        </button>
+                        <button
+                          type="button"
+                          onClick={() => setFwdHeaderTemplate('📢 Broadcast from {source}\\n')}
+                          className="px-2 py-0.5 rounded bg-indigo-500/10 border border-indigo-500/20 text-[9px] text-indigo-300 font-semibold hover:bg-indigo-500/20 active:scale-95 transition-all cursor-pointer"
+                        >
+                          Preset: Broadcast
+                        </button>
+                        <button
+                          type="button"
+                          onClick={() => setFwdHeaderTemplate('')}
+                          className="px-1.5 py-0.5 rounded bg-[#14161f] border border-[#1e2230] text-[9px] text-gray-400 hover:text-white cursor-pointer"
+                        >
+                          Clear
+                        </button>
+                      </div>
                       <input
                         id="fwd_header_template"
                         type="text"
-                        placeholder="e.g. 📢 [TELEFLOW REPORT] \n"
+                        placeholder="e.g. Forwarded From > {source}\n"
                         className="w-full rounded bg-[#14161f] border border-[#1e2230] px-3 py-1.5 text-xs text-white placeholder-gray-600 focus:outline-none"
                         value={fwdHeaderTemplate}
                         onChange={(e) => setFwdHeaderTemplate(e.target.value)}
                       />
-                      <p className="text-[10px] text-gray-500 mt-1">Prepended text prefix. Supports custom \n newline breaks.</p>
+                      <p className="text-[10px] text-gray-500 mt-1">Prepended text prefix. Supports {"{source}"} and custom \n newline breaks.</p>
                     </div>
 
                     <div>
