@@ -101,8 +101,9 @@ export default function UserDashboard({ user, onUpdateUser, onLogout }: UserDash
       const res = await fetch('/api/forwarders', {
         headers: { 'x-user-id': user.id }
       });
-      const data = await res.json();
-      if (res.ok) {
+      const contentType = res.headers.get('content-type');
+      if (res.ok && contentType && contentType.includes('application/json')) {
+        const data = await res.json();
         setForwarders(data.forwarders);
       }
     } catch (e) {
@@ -115,8 +116,9 @@ export default function UserDashboard({ user, onUpdateUser, onLogout }: UserDash
       const res = await fetch('/api/logs', {
         headers: { 'x-user-id': user.id }
       });
-      const data = await res.json();
-      if (res.ok) {
+      const contentType = res.headers.get('content-type');
+      if (res.ok && contentType && contentType.includes('application/json')) {
+        const data = await res.json();
         setLogs(data.logs);
       }
     } catch (e) {
@@ -129,8 +131,9 @@ export default function UserDashboard({ user, onUpdateUser, onLogout }: UserDash
       const res = await fetch('/api/tickets', {
         headers: { 'x-user-id': user.id }
       });
-      const data = await res.json();
-      if (res.ok) {
+      const contentType = res.headers.get('content-type');
+      if (res.ok && contentType && contentType.includes('application/json')) {
+        const data = await res.json();
         setTickets(data.tickets);
       }
     } catch (e) {

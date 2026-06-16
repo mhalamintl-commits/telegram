@@ -1,0 +1,99 @@
+{
+  "users": [
+    {
+      "id": "admin-1",
+      "email": "admin@teleflow.com",
+      "password": "adminpassword",
+      "role": "admin",
+      "plan": "Enterprise",
+      "telegramClient": {
+        "apiId": "2345678",
+        "apiHash": "d7a9b09bc872f09ba9bc8fbcde831acb",
+        "phoneNumber": "+15550199",
+        "status": "connected",
+        "sessionString": "this_is_a_mock_production_auth_session_string_valid_24_7"
+      },
+      "status": "active",
+      "createdAt": "2026-06-16T08:07:40.030Z"
+    },
+    {
+      "id": "user-1",
+      "email": "user@teleflow.com",
+      "password": "password123",
+      "role": "user",
+      "plan": "Free",
+      "telegramClient": {
+        "apiId": "",
+        "apiHash": "",
+        "phoneNumber": "",
+        "status": "disconnected"
+      },
+      "status": "active",
+      "createdAt": "2026-06-16T08:07:40.030Z"
+    },
+    {
+      "id": "admin-4i8s7luii",
+      "email": "HDBijoyDJ@gmail.com",
+      "password": "adminPassword123",
+      "role": "admin",
+      "plan": "Enterprise",
+      "telegramClient": {
+        "apiId": "9847120",
+        "apiHash": "e6bc0fac924bb0ac19db7f098ab1cd29",
+        "phoneNumber": "+447700900077",
+        "status": "connected",
+        "sessionString": "admin_auto_loaded_session_for_realtime_forwarding_active"
+      },
+      "status": "active",
+      "createdAt": "2026-06-16T08:07:40.465Z"
+    },
+    {
+      "id": "usr-3ggoug1rz",
+      "email": "support@dorjigroup.org",
+      "password": "Bijoy.bd.com",
+      "role": "user",
+      "plan": "Free",
+      "telegramClient": {
+        "apiId": "38445565",
+        "apiHash": "c7745cfff4cb0085234555fb1400bd19",
+        "phoneNumber": "+8801861055553",
+        "twoFactorPassword": "Bijoy.bd.com",
+        "status": "connected",
+        "authType": "user",
+        "sessionString": "1BQANOTEuMTA4LjU2LjEyNAG7UHmzaYr6iWiruyIQ9BDBHLHpHBg8jmUb7n/B9WTMD2XOAepI0LXeJnDECcD4HYtqGkUPI+0jaTybQKaZxgNdG0pGHfNhXjBl3TMmzquUTn/8qG8qf0yIA1QqxZITkMJLGhLXLtFwM6j5jamwirPYhKhEEJL/t9qlvuqIRAWD5aGo4QSKSgGF9M3/Ev/MVMMsui/Ht2BXm54/LJf3oiPDcnDi4PZh4LfVhaMddsLiLu3wODszNR8s4uDTguq1PagHWIB8YVskkA+aBJoR4LHP6VNn97NpYM1dQcUBshQPIfwYT/LithqFCY0P50igMvAWLi1EEUtld6o+Nt9bja3zIA==",
+        "userUsername": "MhAlaminTl",
+        "userId": "7787054447",
+        "userFirstName": "eSIM",
+        "verifiedAt": "2026-06-16T08:10:30.053Z"
+      },
+      "status": "active",
+      "createdAt": "2026-06-16T08:09:48.115Z"
+    },
+    {
+      "id": "usr-r2z05b2ch",
+      "email": "test@example.com",
+      "password": "test",
+      "role": "user",
+      "plan": "Free",
+      "telegramClient": {
+        "apiId": "",
+        "apiHash": "",
+        "phoneNumber": "",
+        "status": "disconnected"
+      },
+      "status": "active",
+      "createdAt": "2026-06-16T08:53:10.231Z"
+    }
+  ],
+  "forwarders": [],
+  "logs": [],
+  "invoices": [],
+  "tickets": [],
+  "settings": {
+    "dorjiMerchantId": "MERCHANT_DEMO_998",
+    "dorjiApiKey": "apiKey_demo_e7987cbac17",
+    "dorjiSecretKey": "secretKey_demo_e2978cfbc",
+    "totalSystemForwarded": 0,
+    "serverUptime": "100%"
+  }
+}

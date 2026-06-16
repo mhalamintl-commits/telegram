@@ -42,8 +42,9 @@ export default function App() {
       const res = await fetch('/api/auth/me', {
         headers: { 'x-user-id': uid }
       });
-      const data = await res.json();
-      if (res.ok) {
+      const contentType = res.headers.get('content-type');
+      if (res.ok && contentType && contentType.includes('application/json')) {
+        const data = await res.json();
         setCurrentUser(data.user);
       } else {
         sessionStorage.removeItem('tf_user_id');
@@ -59,9 +60,12 @@ export default function App() {
       const res = await fetch('/api/admin/stats', {
         headers: { 'x-user-id': 'admin-1' } // Fallback admin query to display real dashboard counters
       });
-      const data = await res.json();
-      if (res.ok) {
+      const contentType = res.headers.get('content-type');
+      if (res.ok && contentType && contentType.includes('application/json')) {
+        const data = await res.json();
         setSystemStats(data.stats);
+      } else {
+        console.warn('Stats endpoint returned non-JSON response or failed');
       }
     } catch (e) {
       console.error('Could not load landing stats panel', e);
