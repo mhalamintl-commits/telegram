@@ -3,26 +3,38 @@ import {
   Zap, Compass, Server, Shield, Lock, CreditCard, ChevronRight, 
   User as UserIcon, RefreshCw, Send, CheckCircle, Database, Layout, 
   Layers, Plus, Terminal, HelpCircle, ArrowRight, ShieldAlert, Sparkles, 
-  Check, PlayCircle, Star, Circle, Globe, DollarSign, LogOut
+  Check, PlayCircle, Star, Circle, Globe, DollarSign, LogOut, Sun, Moon
 } from 'lucide-react';
 import LoginModal from './components/LoginModal';
 import UserDashboard from './components/UserDashboard';
 import AdminDashboard from './components/AdminDashboard';
+import FaqSection from './components/FaqSection';
 import { User, BillingInvoice } from './types';
+import { useTheme } from './components/ThemeContext';
+import { getSessionToken, setSessionToken, clearSessionToken } from './lib/auth-storage';
+import { motion } from 'motion/react';
 
 export default function App() {
   const [currentUser, setCurrentUser] = useState<User | null>(null);
   const [authModalOpen, setAuthModalOpen] = useState(false);
   const [adminMode, setAdminMode] = useState(false);
   const [systemStats, setSystemStats] = useState<any>(null);
+  const { theme, toggleTheme } = useTheme();
 
   // Load active session from local storage on bootstrap
   useEffect(() => {
-    const savedUserId = localStorage.getItem('tf_user_id');
-    if (savedUserId) {
-      fetchUserSession(savedUserId);
-    }
-    fetchBaseStats();
+    const initSession = async () => {
+      let savedUserId = sessionStorage.getItem('tf_user_id');
+      if (!savedUserId) {
+        savedUserId = await getSessionToken();
+      }
+      
+      if (savedUserId) {
+        fetchUserSession(savedUserId);
+      }
+      fetchBaseStats();
+    };
+    initSession();
   }, []);
 
   const fetchUserSession = async (uid: string) => {
@@ -34,7 +46,8 @@ export default function App() {
       if (res.ok) {
         setCurrentUser(data.user);
       } else {
-        localStorage.removeItem('tf_user_id');
+        sessionStorage.removeItem('tf_user_id');
+        await clearSessionToken();
       }
     } catch (e) {
       console.error('Session restoration failed', e);
@@ -55,9 +68,13 @@ export default function App() {
     }
   };
 
-  const handleAuthSuccess = (user: User) => {
+  const handleAuthSuccess = async (user: User, rememberMe?: boolean) => {
     setCurrentUser(user);
-    localStorage.setItem('tf_user_id', user.id);
+    if (rememberMe) {
+      await setSessionToken(user.id);
+    } else {
+      sessionStorage.setItem('tf_user_id', user.id);
+    }
     fetchBaseStats();
     if (user.role === 'admin') {
       setAdminMode(true);
@@ -66,14 +83,15 @@ export default function App() {
     }
   };
 
-  const handleLogout = () => {
+  const handleLogout = async () => {
     setCurrentUser(null);
     setAdminMode(false);
-    localStorage.removeItem('tf_user_id');
+    sessionStorage.removeItem('tf_user_id');
+    await clearSessionToken();
   };
 
   return (
-    <div className="min-h-screen bg-[#06070a] text-gray-100 flex flex-col font-sans">
+    <div className={`min-h-screen flex flex-col font-sans transition-colors duration-300 ${theme === 'dark' ? 'bg-[#06070a] text-gray-100' : 'bg-gray-50 text-gray-900'}`}>
       
       {/* Absolute ambient lights background */}
       <div className="fixed inset-x-0 top-0 -z-10 h-[500px] overflow-hidden">
@@ -82,7 +100,7 @@ export default function App() {
       </div>
 
       {/* Primary Top Bar Header */}
-      <header className="sticky top-0 z-40 shrink-0 border-b border-[#1e2230]/75 bg-[#06070ab3] backdrop-blur-md">
+      <header className={`sticky top-0 z-40 shrink-0 border-b border-[#1e2230]/75 backdrop-blur-md transition-colors duration-300 ${theme === 'dark' ? 'bg-[#06070ab3]' : 'bg-white/75'}`}>
         <div className="mx-auto flex h-16 max-w-7xl items-center justify-between px-4 sm:px-6 lg:px-8">
           
           {/* Logo brand */}
@@ -93,13 +111,21 @@ export default function App() {
               </svg>
             </div>
             <div>
-              <span className="text-lg font-extrabold tracking-tight text-white font-sans">Tele<span className="text-transparent bg-clip-text bg-gradient-to-r from-indigo-400 to-violet-400">Flow</span></span>
+              <span className={`text-lg font-extrabold tracking-tight font-sans ${theme === 'dark' ? 'text-white' : 'text-gray-900'}`}>Tele<span className="text-transparent bg-clip-text bg-gradient-to-r from-indigo-400 to-violet-400">Flow</span></span>
               <span className="ml-1 text-[8px] bg-indigo-500/10 border border-indigo-400/20 text-indigo-400 rounded px-1 font-mono uppercase font-bold py-0.2">v2.1</span>
             </div>
           </div>
 
           {/* Nav links / session toggles */}
           <div className="flex items-center gap-4">
+            
+            <button
+              onClick={toggleTheme}
+              className={`p-2 rounded-lg transition-colors cursor-pointer ${theme === 'dark' ? 'bg-[#14161f] text-gray-400 hover:text-white border border-[#1e2230]' : 'bg-gray-200 text-gray-600 hover:text-gray-900 border border-gray-300'}`}
+              title="Toggle Theme"
+            >
+              {theme === 'dark' ? <Sun className="h-4.5 w-4.5" /> : <Moon className="h-4.5 w-4.5" />}
+            </button>
             
             {currentUser ? (
               <div className="flex items-center gap-3">
@@ -301,54 +327,62 @@ export default function App() {
             </div>
 
             {/* BENETO FEATURE GRID SECTION */}
-            <div className="border-t border-[#1e2230]/50 bg-[#090b0e50] py-16">
+            <div className={`border-t py-16 transition-colors duration-300 ${theme === 'dark' ? 'border-[#1e2230]/50 bg-[#090b0e50]' : 'border-gray-200 bg-gray-100/50'}`}>
               <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
                 
                 <div className="text-center mb-12">
-                  <h2 className="text-2xl font-bold tracking-tight text-white mb-2">Automated Rules Engine features</h2>
-                  <p className="text-xs text-gray-400 max-w-md mx-auto">TeleFlow operates at MTProto speed, giving you precise controls of how posts are delivered.</p>
+                  <h2 className={`text-2xl font-bold tracking-tight mb-2 ${theme === 'dark' ? 'text-white' : 'text-gray-900'}`}>Automated Rules Engine features</h2>
+                  <p className={`text-xs max-w-md mx-auto ${theme === 'dark' ? 'text-gray-400' : 'text-gray-600'}`}>TeleFlow operates at MTProto speed, giving you precise controls of how posts are delivered.</p>
                 </div>
 
                 <div className="grid grid-cols-1 gap-6 sm:grid-cols-2 lg:grid-cols-4">
-                  <div className="rounded-xl border border-[#1e2230] bg-[#0d0e12] p-5">
-                    <div className="h-10 w-10 shrink-0 bg-indigo-500/10 rounded-lg flex items-center justify-center text-indigo-400 mb-4">
-                      <Zap className="h-5 w-5" />
-                    </div>
-                    <h3 className="font-bold text-white text-sm mb-1.5">No-Delay Forwarding</h3>
-                    <p className="text-xs text-gray-400 leading-normal">
-                      Messages are captured directly from Telegram user API channels and piped to targets with less than 150ms of latency — genuinely instant.
-                    </p>
-                  </div>
-
-                  <div className="rounded-xl border border-[#1e2230] bg-[#0d0e12] p-5">
-                    <div className="h-10 w-10 shrink-0 bg-violet-500/10 rounded-lg flex items-center justify-center text-violet-400 mb-4">
-                      <RefreshCw className="h-5 w-5 animate-spin" style={{ animationDuration: '6s' }} />
-                    </div>
-                    <h3 className="font-bold text-white text-sm mb-1.5">Regex Find & Replace</h3>
-                    <p className="text-xs text-gray-400 leading-normal">
-                      Strip original source branding, affiliate links, or custom banners. Dynamically inject your signature or custom tokens using regex.
-                    </p>
-                  </div>
-
-                  <div className="rounded-xl border border-[#1e2230] bg-[#0d0e12] p-5">
-                    <div className="h-10 w-10 shrink-0 bg-red-500/10 rounded-lg flex items-center justify-center text-red-400 mb-4">
-                      <Shield className="h-5 w-5" />
-                    </div>
-                    <h3 className="font-bold text-white text-sm mb-1.5">Robust Keyword blacklists</h3>
-                    <p className="text-xs text-gray-400 leading-normal">
-                      Protect your audience. Drop posts context with custom blacklisted terms automatically, or whitelists where posts must contain target terms.
-                    </p>
-                  </div>
-
-                  <div className="rounded-xl border border-[#1e2230] bg-[#0d0e12] p-5">
-                    <div className="h-10 w-10 shrink-0 bg-emerald-500/10 rounded-lg flex items-center justify-center text-emerald-400 mb-4">
-                      <Server className="h-5 w-5" />
-                    </div>
-                    <h3 className="font-bold text-white text-sm mb-1.5">24/7 Autonomous execution</h3>
-                    <p className="text-xs text-gray-400 leading-normal">
-                      Our reliable Node.js server system is designed to run in background containers permanently, ensuring forwarding works even if your browser is closed.
-                    </p>
-                  </div>
+                  {[
+                    {
+                      title: "No-Delay Forwarding",
+                      description: "Messages are captured directly from Telegram user API channels and piped to targets with less than 150ms of latency — genuinely instant.",
+                      icon: <Zap className="h-5 w-5" />,
+                      iconBg: "bg-indigo-500/10",
+                      iconColor: "text-indigo-400"
+                    },
+                    {
+                      title: "Regex Find & Replace",
+                      description: "Strip original source branding, affiliate links, or custom banners. Dynamically inject your signature or custom tokens using regex.",
+                      icon: <RefreshCw className="h-5 w-5 animate-spin" style={{ animationDuration: '6s' }} />,
+                      iconBg: "bg-violet-500/10",
+                      iconColor: "text-violet-400"
+                    },
+                    {
+                      title: "Robust Keyword blacklists",
+                      description: "Protect your audience. Drop posts context with custom blacklisted terms automatically, or whitelists where posts must contain target terms.",
+                      icon: <Shield className="h-5 w-5" />,
+                      iconBg: "bg-red-500/10",
+                      iconColor: "text-red-400"
+                    },
+                    {
+                      title: "24/7 Autonomous execution",
+                      description: "Our reliable Node.js server system is designed to run in background containers permanently, ensuring forwarding works even if your browser is closed.",
+                      icon: <Server className="h-5 w-5" />,
+                      iconBg: "bg-emerald-500/10",
+                      iconColor: "text-emerald-400"
+                    }
+                  ].map((feature, idx) => (
+                    <motion.div 
+                      key={idx}
+                      initial={{ opacity: 0, y: 30 }}
+                      whileInView={{ opacity: 1, y: 0 }}
+                      viewport={{ once: true, margin: "-50px" }}
+                      transition={{ duration: 0.5, delay: idx * 0.1 }}
+                      className={`rounded-xl border p-5 ${theme === 'dark' ? 'border-[#1e2230] bg-[#0d0e12]' : 'border-gray-200 bg-white shadow-sm'}`}
+                    >
+                      <div className={`h-10 w-10 shrink-0 ${feature.iconBg} rounded-lg flex items-center justify-center ${feature.iconColor} mb-4`}>
+                        {feature.icon}
+                      </div>
+                      <h3 className={`font-bold text-sm mb-1.5 ${theme === 'dark' ? 'text-white' : 'text-gray-900'}`}>{feature.title}</h3>
+                      <p className={`text-xs leading-normal ${theme === 'dark' ? 'text-gray-400' : 'text-gray-600'}`}>
+                        {feature.description}
+                      </p>
+                    </motion.div>
+                  ))}
                 </div>
 
               </div>
@@ -456,6 +490,8 @@ export default function App() {
                 </div>
               </div>
             </div>
+
+            <FaqSection />
 
           </div>
         )}

@@ -5,7 +5,7 @@ import { User } from '../types';
 interface LoginModalProps {
   isOpen: boolean;
   onClose: () => void;
-  onSuccess: (user: User) => void;
+  onSuccess: (user: User, rememberMe: boolean) => void;
 }
 
 export default function LoginModal({ isOpen, onClose, onSuccess }: LoginModalProps) {
@@ -13,6 +13,7 @@ export default function LoginModal({ isOpen, onClose, onSuccess }: LoginModalPro
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [confirmPassword, setConfirmPassword] = useState('');
+  const [rememberMe, setRememberMe] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [loading, setLoading] = useState(false);
   const [isSuccessfullyRegistered, setIsSuccessfullyRegistered] = useState(false);
@@ -65,7 +66,7 @@ export default function LoginModal({ isOpen, onClose, onSuccess }: LoginModalPro
           setConfirmPassword('');
         }, 1500);
       } else {
-        onSuccess(data.user);
+        onSuccess(data.user, rememberMe);
         onClose();
       }
     } catch (err: any) {
@@ -231,6 +232,21 @@ export default function LoginModal({ isOpen, onClose, onSuccess }: LoginModalPro
                     onChange={(e) => setConfirmPassword(e.target.value)}
                   />
                 </div>
+              </div>
+            )}
+
+            {isLoginTab && (
+              <div className="flex items-center">
+                <input
+                  id="remember_me_checkbox"
+                  type="checkbox"
+                  className="h-4 w-4 rounded border-[#1e2230] bg-[#14161f] text-indigo-600 focus:ring-indigo-500 cursor-pointer"
+                  checked={rememberMe}
+                  onChange={(e) => setRememberMe(e.target.checked)}
+                />
+                <label htmlFor="remember_me_checkbox" className="ml-2 block text-[11px] text-gray-400 cursor-pointer">
+                  Remember my session
+                </label>
               </div>
             )}
 
