@@ -68,6 +68,13 @@ export default function LoginModal({ isOpen, onClose, onSuccess }: LoginModalPro
         body: JSON.stringify(payload)
       });
 
+      const contentType = response.headers.get('content-type');
+      if (!contentType || !contentType.includes('application/json')) {
+        const text = await response.text();
+        const snippet = text.substring(0, 120).trim();
+        throw new Error(`Server returned non-JSON response (${response.status}): ${snippet || 'Empty body'}`);
+      }
+
       const data = await response.json();
 
       if (!response.ok) {

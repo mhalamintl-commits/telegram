@@ -12,6 +12,24 @@ const PORT = 3000;
 
 app.use(express.json());
 
+// Helper function to guard asynchronous operations (e.g., telegram connections) with a timeout
+function withTimeout<T>(promise: Promise<T>, ms: number, errorMessage = 'Operation timed out'): Promise<T> {
+  let timeoutId: NodeJS.Timeout | undefined;
+  const timeoutPromise = new Promise<never>((_, reject) => {
+    timeoutId = setTimeout(() => {
+      reject(new Error(errorMessage));
+    }, ms);
+  });
+  return Promise.race([
+    promise.finally(() => {
+      if (timeoutId) {
+        clearTimeout(timeoutId);
+      }
+    }),
+    timeoutPromise
+  ]);
+}
+
 // Boot-strap admin using metadata email
 const DEFAULT_ADMIN_EMAIL = "HDBijoyDJ@gmail.com";
 try {
@@ -1123,7 +1141,7 @@ app.post('/api/billing/create-invoice', async (req, res) => {
 
   try {
     console.log(`[DorjiPay] Initiating checkout for invoice ${invoiceId} ($${amount}) using key: ${activeKey}`);
-    const apiRes = await fetch('https://checkout.dorjigroup.org/api/payment/create', {
+    const apiRes = await withTimeout(fetch('https://checkout.dorjigroup.org/api/payment/create', {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',
@@ -1137,7 +1155,7 @@ app.post('/api/billing/create-invoice', async (req, res) => {
         cancel_url: `${baseUrl}/api/pay/callback?invoiceId=${invoiceId}&status=canceled`,
         meta_data: JSON.stringify({ invoiceId, userId })
       })
-    });
+    }), 5000, 'Payment Gateway request timed out');
 
     if (apiRes.status >= 200 && apiRes.status < 300) {
       const data = await apiRes.json() as any;
@@ -1198,7 +1216,7 @@ app.get('/api/pay/callback', async (req, res) => {
     const activeKey = db.settings?.dorjiApiKey || process.env.DORJI_API_KEY || 'apiKey_demo_e7987cbac17';
     try {
       console.log(`[DorjiPay Callback] Verifying transaction ${activeTxId} for invoice ${invoice.id}...`);
-      const verifyRes = await fetch('https://checkout.dorjigroup.org/api/payment/verify', {
+      const verifyRes = await withTimeout(fetch('https://checkout.dorjigroup.org/api/payment/verify', {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
@@ -1207,7 +1225,7 @@ app.get('/api/pay/callback', async (req, res) => {
         body: JSON.stringify({
           transaction_id: activeTxId
         })
-      });
+      }), 5000, 'Payment verification timed out');
 
       if (verifyRes.status >= 200 && verifyRes.status < 300) {
         const verifyData = await verifyRes.json() as any;
@@ -1497,7 +1515,7 @@ async function getOrCreateCachedUserClient(userId: string, sessionString: string
       try {
         if (!cached.client.connected) {
           console.log(`[User Client Pool] Reconnecting stagnant client for user ${userId}...`);
-          await cached.client.connect();
+          await withTimeout(cached.client.connect(), 4000, 'Reconnection timed out');
         }
         return cached.client;
       } catch (err) {
@@ -1523,7 +1541,7 @@ async function getOrCreateCachedUserClient(userId: string, sessionString: string
     const client = new TelegramClient(new StringSession(sessionString), Number(apiId), apiHash, {
       connectionRetries: 3,
     });
-    await client.connect();
+    await withTimeout(client.connect(), 4000, 'Initial connection timed out');
     userClientPool.set(userId, { client, sessionString });
     return client;
   } catch (err: any) {
@@ -2092,7 +2110,7 @@ async function runUserRealtimeCollectionPoller(): Promise<void> {
               }
 
               // Fetch latest 5 messages from this channel/group/bot
-              const messages = await client.getMessages(sourceParam, { limit: 5 });
+              const messages = await withTimeout(client.getMessages(sourceParam, { limit: 5 }), 4000, 'getMessages timed out');
               if (!messages || !Array.isArray(messages) || messages.length === 0) continue;
 
               const latestMsgId = messages[0].id;
