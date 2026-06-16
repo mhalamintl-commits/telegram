@@ -49,7 +49,13 @@ const DEFAULT_DATA = {
     dorjiApiKey: 'apiKey_demo_e7987cbac17',
     dorjiSecretKey: 'secretKey_demo_e2978cfbc',
     totalSystemForwarded: 0,
-    serverUptime: '100%'
+    serverUptime: '100%',
+    smtpHost: '',
+    smtpPort: 587,
+    smtpSecure: false,
+    smtpUser: '',
+    smtpPass: '',
+    smtpFrom: 'support@dorjigroup.org'
   }
 };
 
@@ -141,7 +147,7 @@ export function saveDb(data: DbSchema) {
 // Global user email configuration boot-strapper (from metadata rules)
 export function checkAndBootAdmin(userEmail: string) {
   const db = loadDb();
-  const index = db.users.findIndex(u => u.email.toLowerCase() === userEmail.toLowerCase());
+  const index = db.users.findIndex(u => u.email && u.email.toLowerCase() === userEmail.toLowerCase());
   if (index !== -1) {
     if (db.users[index].role !== 'admin') {
       db.users[index].role = 'admin';

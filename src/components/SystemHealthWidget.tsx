@@ -35,14 +35,16 @@ export default function SystemHealthWidget({ user, forwarders }: SystemHealthWid
 
   // Initialize status array
   useEffect(() => {
-    // If user has no forwarders, seed with demo channels in sandbox mode so the UI is immediately fully interactive!
-    const sourcesToUse = uniqueSources.length > 0 ? uniqueSources : ['@crypto_signals_global', '@market_pulse_feed'];
-    const targetsToUse = uniqueTargets.length > 0 ? uniqueTargets : ['@my_forwarded_target', '@telegram_test_group'];
+    // If user has no forwarders, do not list any channel statuses (remove all demo)
+    if (uniqueSources.length === 0 && uniqueTargets.length === 0) {
+      setChannelStatuses([]);
+      return;
+    }
 
     const clientStatus = user.telegramClient?.status || 'disconnected';
 
     const list: ChannelStatus[] = [
-      ...sourcesToUse.map(src => ({
+      ...uniqueSources.map(src => ({
         name: src,
         type: 'source' as const,
         status: (clientStatus === 'connected' ? 'online' : 'warning') as ChannelStatus['status'],
@@ -51,7 +53,7 @@ export default function SystemHealthWidget({ user, forwarders }: SystemHealthWid
         lastChecked: 'Just Now',
         errorDetail: clientStatus !== 'connected' ? 'Client account disconnected. Authenticate in Telegram Auth tab.' : undefined
       })),
-      ...targetsToUse.map(tgt => ({
+      ...uniqueTargets.map(tgt => ({
         name: tgt,
         type: 'target' as const,
         status: (clientStatus === 'connected' ? 'online' : 'warning') as ChannelStatus['status'],
@@ -231,100 +233,6 @@ export default function SystemHealthWidget({ user, forwarders }: SystemHealthWid
             {user.plan === 'Free' ? '60 second delay under load.' : '0ms routing queue dispatch.'}
           </p>
         </div>
-      </div>
-
-      {/* Channels Status Table */}
-      <div className="bg-[#14161f]/30 border border-[#1e2230] rounded-xl overflow-hidden mb-6">
-        <div className="px-4 py-3 border-b border-[#1e2230] bg-[#14161f]/50 flex justify-between items-center">
-          <span className="text-xs font-bold text-gray-200">Configured Node Target Endpoints</span>
-          {uniqueSources.length === 0 && uniqueTargets.length === 0 && (
-            <span className="text-[9px] uppercase font-bold tracking-wider px-2 py-0.5 rounded bg-amber-500/10 text-amber-400 border border-amber-500/20">
-              Demo Sandbox Mode
-            </span>
-          )}
-        </div>
-
-        {channelStatuses.length === 0 ? (
-          <div className="p-8 text-center text-gray-500 text-xs">
-            No pipeline targets configured yet. Establish a forwarder route above to display live health diagnostics.
-          </div>
-        ) : (
-          <div className="divide-y divide-[#1e2230] max-h-80 overflow-y-auto">
-            {channelStatuses.map((channel, idx) => (
-              <div key={`${channel.name}-${idx}`} className="p-4 flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3 hover:bg-[#14161f]/40 transition-colors">
-                <div className="flex items-start gap-3">
-                  <div className="mt-1">
-                    {channel.status === 'online' && (
-                      <span className="relative flex h-2.5 w-2.5">
-                        <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-emerald-400 opacity-75"></span>
-                        <span className="relative inline-flex rounded-full h-2.5 w-2.5 bg-emerald-500"></span>
-                      </span>
-                    )}
-                    {channel.status === 'checking' && (
-                      <span className="relative flex h-2.5 w-2.5">
-                        <span className="animate-spin h-2.5 w-2.5 rounded-full border border-t-white border-indigo-500" />
-                      </span>
-                    )}
-                    {channel.status === 'warning' && (
-                      <span className="relative flex h-2.5 w-2.5">
-                        <span className="relative inline-flex rounded-full h-2.5 w-2.5 bg-amber-500"></span>
-                      </span>
-                    )}
-                    {channel.status === 'offline' && (
-                      <span className="relative flex h-2.5 w-2.5">
-                        <span className="relative inline-flex rounded-full h-2.5 w-2.5 bg-red-500"></span>
-                      </span>
-                    )}
-                  </div>
-
-                  <div>
-                    <div className="flex items-center gap-2">
-                      <span className="font-mono text-xs font-bold text-white tracking-wide">{channel.name}</span>
-                      <span className={`text-[9px] uppercase font-bold px-1.5 py-0.2 rounded border ${
-                        channel.type === 'source' 
-                          ? 'bg-blue-500/10 border-blue-500/20 text-blue-400' 
-                          : 'bg-indigo-500/10 border-indigo-500/20 text-indigo-400'
-                      }`}>
-                        {channel.type === 'source' ? 'Source / Feed' : 'Destination / Target'}
-                      </span>
-                    </div>
-                    <div className="flex items-center gap-2 mt-1 text-[10px] text-gray-400">
-                      <span>Permissions: <strong className="text-gray-300">{channel.permissions}</strong></span>
-                      <span>•</span>
-                      <span>Last: <strong className="text-gray-300">{channel.lastChecked}</strong></span>
-                    </div>
-                    {channel.errorDetail && (
-                      <div className="mt-1.5 flex items-center gap-1.5 text-[10px] text-amber-500 font-medium">
-                        <AlertTriangle className="h-3.5 w-3.5 shrink-0" />
-                        <span>{channel.errorDetail}</span>
-                      </div>
-                    )}
-                  </div>
-                </div>
-
-                <div className="flex items-center gap-4 sm:self-center self-end shrink-0">
-                  <div className="text-right font-mono">
-                    <p className="text-[10px] text-gray-500 uppercase">PING LATENCY</p>
-                    <p className={`text-xs font-bold ${channel.status === 'online' ? 'text-indigo-400' : 'text-gray-400'}`}>
-                      {channel.status === 'checking' ? '...' : `${channel.latency} ms`}
-                    </p>
-                  </div>
-
-                  {channel.type === 'target' && (
-                    <button
-                      id={`btn_verify_${channel.name}`}
-                      disabled={testingTarget === channel.name}
-                      onClick={() => testChannelDeliveryLive(channel.name)}
-                      className="rounded border border-indigo-500/20 bg-indigo-505/10 bg-indigo-505 bg-indigo-500/5 hover:bg-indigo-500/20 text-indigo-400 text-[10px] uppercase font-bold tracking-wider px-2.5 py-1 transition-all cursor-pointer disabled:opacity-50"
-                    >
-                      {testingTarget === channel.name ? 'Testing...' : 'Test Delivery Link'}
-                    </button>
-                  )}
-                </div>
-              </div>
-            ))}
-          </div>
-        )}
       </div>
 
       {/* Diagnostics output responses */}

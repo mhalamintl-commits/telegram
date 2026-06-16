@@ -19,6 +19,15 @@ export default function AdminDashboard({ adminUser }: AdminDashboardProps) {
 
   // System credentials edit state
   const [apiKey, setApiKey] = useState('');
+  
+  // SMTP settings state
+  const [smtpHost, setSmtpHost] = useState('');
+  const [smtpPort, setSmtpPort] = useState(587);
+  const [smtpSecure, setSmtpSecure] = useState(false);
+  const [smtpUser, setSmtpUser] = useState('');
+  const [smtpPass, setSmtpPass] = useState('');
+  const [smtpFrom, setSmtpFrom] = useState('');
+  
   const [successMsg, setSuccessMsg] = useState<string | null>(null);
 
   // Edit user state
@@ -69,7 +78,14 @@ export default function AdminDashboard({ adminUser }: AdminDashboardProps) {
         throw new Error(statsData.error || 'Failed to authenticate admin stats');
       }
       setAdminStats(statsData.stats);
-      setApiKey(statsData.stats.systemSettings?.dorjiApiKey || '');
+      const settings = statsData.stats.systemSettings || {};
+      setApiKey(settings.dorjiApiKey || '');
+      setSmtpHost(settings.smtpHost || '');
+      setSmtpPort(settings.smtpPort || 587);
+      setSmtpSecure(settings.smtpSecure || false);
+      setSmtpUser(settings.smtpUser || '');
+      setSmtpPass(settings.smtpPass || '');
+      setSmtpFrom(settings.smtpFrom || 'support@dorjigroup.org');
 
       // Fetch users
       const usersRes = await fetch('/api/admin/users', {
@@ -97,7 +113,13 @@ export default function AdminDashboard({ adminUser }: AdminDashboardProps) {
           'x-user-id': adminUser.id
         },
         body: JSON.stringify({
-          dorjiApiKey: apiKey
+          dorjiApiKey: apiKey,
+          smtpHost,
+          smtpPort: Number(smtpPort),
+          smtpSecure,
+          smtpUser,
+          smtpPass,
+          smtpFrom
         })
       });
 
@@ -142,6 +164,27 @@ export default function AdminDashboard({ adminUser }: AdminDashboardProps) {
         fetchAdminData();
       } else {
         throw new Error(data.error || 'Update failed');
+      }
+    } catch (err: any) {
+      alert(err.message || 'Action failed.');
+    }
+  };
+
+  const handleDeleteUser = async (usrId: string) => {
+    if (!window.confirm('Are you sure you want to permanently delete this user account? All resources (forwarders, logs, invoices) will be removed.')) return;
+    
+    try {
+      const res = await fetch(`/api/admin/users/${usrId}`, {
+        method: 'DELETE',
+        headers: {
+          'x-user-id': adminUser.id
+        }
+      });
+      const data = await res.json();
+      if (res.ok) {
+        fetchAdminData();
+      } else {
+        throw new Error(data.error || 'Failed to delete user.');
       }
     } catch (err: any) {
       alert(err.message || 'Action failed.');
@@ -415,13 +458,24 @@ export default function AdminDashboard({ adminUser }: AdminDashboardProps) {
                               </button>
                             </div>
                           ) : (
-                            <button
-                              onClick={() => handleEditUserClick(usr)}
-                              className="text-indigo-400 hover:text-indigo-300 flex items-center gap-1 ml-auto text-[11px] cursor-pointer"
-                            >
-                              <Edit className="h-3 w-3" />
-                              Override Config
-                            </button>
+                            <div className="flex items-center justify-end gap-3">
+                              <button
+                                onClick={() => handleEditUserClick(usr)}
+                                className="text-indigo-400 hover:text-indigo-300 flex items-center gap-1 text-[11px] cursor-pointer"
+                              >
+                                <Edit className="h-3 w-3" />
+                                Override Config
+                              </button>
+                              {!isUserTheAdminSelf && (
+                                <button
+                                  onClick={() => handleDeleteUser(usr.id)}
+                                  className="text-red-500 hover:text-red-400 flex items-center cursor-pointer"
+                                  title="Delete User"
+                                >
+                                  <Trash className="h-3 w-3" />
+                                </button>
+                              )}
+                            </div>
                           )}
                         </td>
                       </tr>
@@ -456,6 +510,75 @@ export default function AdminDashboard({ adminUser }: AdminDashboardProps) {
                   value={apiKey}
                   onChange={(e) => setApiKey(e.target.value)}
                 />
+              </div>
+              
+              <div className="pt-4 border-t border-[#1e2230]">
+                <h5 className="font-bold text-xs text-white mb-3">SMTP Mail Configuration</h5>
+                <div className="space-y-3">
+                  <div className="grid grid-cols-2 gap-3">
+                    <div>
+                      <label className="block text-[10px] font-bold text-gray-400 mb-1">SMTP Host</label>
+                      <input
+                        type="text"
+                        placeholder="smtp.gmail.com"
+                        className="w-full rounded bg-[#14161f] border border-[#1e2230] px-2 py-1.5 text-xs text-white font-mono focus:outline-none focus:border-indigo-500"
+                        value={smtpHost}
+                        onChange={(e) => setSmtpHost(e.target.value)}
+                      />
+                    </div>
+                    <div>
+                      <label className="block text-[10px] font-bold text-gray-400 mb-1">Port</label>
+                      <input
+                        type="number"
+                        className="w-full rounded bg-[#14161f] border border-[#1e2230] px-2 py-1.5 text-xs text-white font-mono focus:outline-none focus:border-indigo-500"
+                        value={smtpPort}
+                        onChange={(e) => setSmtpPort(Number(e.target.value))}
+                      />
+                    </div>
+                  </div>
+                  <div className="grid grid-cols-2 gap-3">
+                    <div>
+                      <label className="block text-[10px] font-bold text-gray-400 mb-1">SMTP User</label>
+                      <input
+                        type="text"
+                        className="w-full rounded bg-[#14161f] border border-[#1e2230] px-2 py-1.5 text-xs text-white font-mono focus:outline-none focus:border-indigo-500"
+                        value={smtpUser}
+                        onChange={(e) => setSmtpUser(e.target.value)}
+                      />
+                    </div>
+                    <div>
+                      <label className="block text-[10px] font-bold text-gray-400 mb-1">SMTP Password</label>
+                      <input
+                        type="password"
+                        className="w-full rounded bg-[#14161f] border border-[#1e2230] px-2 py-1.5 text-xs text-white font-mono focus:outline-none focus:border-indigo-500"
+                        value={smtpPass}
+                        onChange={(e) => setSmtpPass(e.target.value)}
+                      />
+                    </div>
+                  </div>
+                  <div className="grid grid-cols-2 gap-3 items-center">
+                    <div>
+                      <label className="block text-[10px] font-bold text-gray-400 mb-1">From Email Address</label>
+                      <input
+                        type="text"
+                        placeholder="support@dorjigroup.org"
+                        className="w-full rounded bg-[#14161f] border border-[#1e2230] px-2 py-1.5 text-xs text-white font-mono focus:outline-none focus:border-indigo-500"
+                        value={smtpFrom}
+                        onChange={(e) => setSmtpFrom(e.target.value)}
+                      />
+                    </div>
+                    <div className="flex items-center gap-2 mt-4 space-x-2">
+                       <input 
+                         type="checkbox" 
+                         id="smtp_secure_check"
+                         className="rounded bg-[#14161f] border-[#1e2230]"
+                         checked={smtpSecure}
+                         onChange={(e) => setSmtpSecure(e.target.checked)}
+                       />
+                       <label htmlFor="smtp_secure_check" className="text-[10px] text-gray-400 font-bold cursor-pointer">Use Secure SSL/TLS (true for 465)</label>
+                    </div>
+                  </div>
+                </div>
               </div>
 
               {successMsg && (
