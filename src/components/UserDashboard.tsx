@@ -5,7 +5,7 @@ import {
   Plus, Edit, HelpCircle, ArrowRight, Zap, CheckCircle, CreditCard, 
   Terminal, Code2, AlertTriangle, MessageSquare, Download, Key
 } from 'lucide-react';
-import { User, Forwarder, ForwardingLog, SUBSCRIPTION_PLANS, SubscriptionPlan } from '../types';
+import { User, Forwarder, ForwardingLog, SUBSCRIPTION_PLANS, SubscriptionPlan, ReplaceRule } from '../types';
 import CheckoutModal from './CheckoutModal';
 import OnboardingStepper from './OnboardingStepper';
 import RecentActivityFeed from './RecentActivityFeed';
@@ -36,7 +36,7 @@ export default function UserDashboard({ user, onUpdateUser, onLogout }: UserDash
   const [fwdTargets, setFwdTargets] = useState(''); // Comma separated
   const [fwdIncludes, setFwdIncludes] = useState(''); // Comma separated
   const [fwdExcludes, setFwdExcludes] = useState(''); // Comma separated
-  const [fwdReplace, setFwdReplace] = useState<{ find: string; replace: string }[]>([]);
+  const [fwdReplace, setFwdReplace] = useState<ReplaceRule[]>([]);
   const [fwdMediaOnly, setFwdMediaOnly] = useState(false);
   const [fwdTextOnly, setFwdTextOnly] = useState(false);
   
@@ -170,8 +170,8 @@ export default function UserDashboard({ user, onUpdateUser, onLogout }: UserDash
     setFwdIncludes('');
     setFwdExcludes('scam, spam, referral');
     setFwdReplace([
-      { find: 'project', replace: 'PRJ' },
-      { find: 'company', replace: 'CO' }
+      { id: 'rep-default-1', find: 'project', replace: 'PRJ' },
+      { id: 'rep-default-2', find: 'company', replace: 'CO' }
     ]);
     setFwdMediaOnly(false);
     setFwdTextOnly(false);
